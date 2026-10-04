@@ -1,5 +1,7 @@
 # boost-demo
 
+[![Build and test](https://github.com/ribomation/boost-demo/actions/workflows/build.yml/badge.svg)](https://github.com/ribomation/boost-demo/actions/workflows/build.yml)
+
 A command-line tool that downloads one year of NOAA weather data, decompresses
 and unpacks it as a stream, extracts the temperature measurements, aggregates
 them and prints a readable report. Nothing is written to disk, unless you ask

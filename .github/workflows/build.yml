@@ -1,0 +1,60 @@
+name: Build and test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  BOOST_VERSION: 1.92.0
+  DEBIAN_FRONTEND: noninteractive
+  BOOST_ROOT_DIR: /opt/boost
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: gcc:16
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools and libraries
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends cmake ninja-build libssl-dev zlib1g-dev catch2
+
+      - name: Cache Boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BOOST_ROOT_DIR }}
+          key: boost-${{ env.BOOST_VERSION }}-gcc16-${{ hashFiles('.github/workflows/build.yml') }}
+
+      - name: Build Boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL -o boost.tar.xz \
+            https://github.com/boostorg/boost/releases/download/boost-${BOOST_VERSION}/boost-${BOOST_VERSION}-cmake.tar.xz
+          tar -xf boost.tar.xz
+          cmake -S boost-${BOOST_VERSION} -B boost-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_INSTALL_PREFIX=${BOOST_ROOT_DIR} \
+            -DBOOST_INCLUDE_LIBRARIES="program_options;iostreams;beast;accumulators;property_tree;container;algorithm;tokenizer" \
+            -DBOOST_IOSTREAMS_ENABLE_ZLIB=ON \
+            -DBOOST_IOSTREAMS_ENABLE_BZIP2=OFF \
+            -DBOOST_IOSTREAMS_ENABLE_LZMA=OFF \
+            -DBOOST_IOSTREAMS_ENABLE_ZSTD=OFF
+          cmake --build boost-build
+          cmake --install boost-build
+          rm -rf boost.tar.xz boost-${BOOST_VERSION} boost-build
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=${BOOST_ROOT_DIR}
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
