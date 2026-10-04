@@ -1,0 +1,6 @@
+cache/
+build/
+.idea/
+.vscode/
+*.gz
+*.tar
