@@ -138,6 +138,10 @@ cache_dir = cache
 
 If the default file is missing, built-in defaults are used.
 
+## License
+
+MIT, see [LICENSE](LICENSE).
+
 ## Authors
 
 Jens Riboe, [Ribomation](https://www.ribomation.se/)
